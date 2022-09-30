@@ -1,13 +1,17 @@
+extern crate globwalk;
 use clap::Parser;
-use glob::glob;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
-    /// Name of the person to greet
+    /// blob[s] of json files
+    #[arg()]
+    arg_blobs: Vec<String>,
+
+    /// blob[s] of json files
     #[arg(short, long)]
-    name: String,
+    blobs: Vec<String>,
 
     /// Number of times to greet
     #[arg(short, long, default_value_t = 1)]
@@ -17,14 +21,18 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    for entry in glob(&args.name).expect("Failed to read glob pattern") {
-        match entry {
-            Ok(path) => println!("{:?}", path.display()),
-            Err(e) => println!("{:?}", e),
+    let walker = globwalk::GlobWalkerBuilder::from_patterns(
+        "./",
+        &[&args.blobs[..], &args.arg_blobs[..]].concat(),
+    )
+    .build()
+    .into_iter();
+    for entries in walker {
+        for entry in entries {
+            match entry {
+                Ok(path) => println!("{:?}", path.file_name()),
+                Err(e) => println!("{:?}", e),
+            }
         }
-    }
-
-    for _ in 0..args.count {
-        println!("Hello {}!", args.name)
     }
 }
