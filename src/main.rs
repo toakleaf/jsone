@@ -1,5 +1,5 @@
 use clap::Parser;
-use globset::{Glob, GlobBuilder};
+use glob::glob;
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -16,11 +16,13 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    let builder = GlobBuilder::new(&args.name);
 
-    let set = builder.build().expect("ok");
-
-    println!("{:?}", set.compile_matcher());
+    for entry in glob(&args.name).expect("Failed to read glob pattern") {
+        match entry {
+            Ok(path) => println!("{:?}", path.display()),
+            Err(e) => println!("{:?}", e),
+        }
+    }
 
     for _ in 0..args.count {
         println!("Hello {}!", args.name)
